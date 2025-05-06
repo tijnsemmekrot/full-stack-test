@@ -1,4 +1,4 @@
 {
-  "version": 2,
-  "public": "frontend"
+  "public": true,
+  "outputDirectory": "frontend"
 }
