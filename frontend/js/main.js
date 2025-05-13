@@ -2,7 +2,7 @@ document.getElementById('nameForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   try {
-    const response = await fetch('http://localhost:8080/api/firstName', {
+    const response = await fetch('https://full-stack-test-nddw.onrender.com/api/firstName', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'  // Required for JSON
