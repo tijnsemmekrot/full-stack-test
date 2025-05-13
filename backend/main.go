@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 )
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
@@ -41,6 +42,7 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	fmt.Println("Go version:", runtime.Version())
 	http.Handle("/", http.FileServer(http.Dir("../frontend")))
 	http.HandleFunc("/api/firstName", enableCORS(fetchData))
 	err := http.ListenAndServe(":8080", nil)
