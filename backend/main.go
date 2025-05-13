@@ -32,7 +32,7 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		fmt.Printf("Request received with first name: %s", data.FirstName)
+		log.Println("Request received with first name:", data.FirstName)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":   "success",
@@ -42,7 +42,7 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println("Go version:", runtime.Version())
+	log.Println("Go version:", runtime.Version())
 	http.Handle("/", http.FileServer(http.Dir("../frontend")))
 	http.HandleFunc("/api/firstName", enableCORS(fetchData))
 	err := http.ListenAndServe(":8080", nil)
