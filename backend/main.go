@@ -1,34 +1,34 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"runtime"
-
-	"github.com/marcboeker/go-duckdb"
 )
 
-func connectToDatabase() {
-  db, err := sql.Open("duckdb", "../db/testdb.ddb")
-  if err != nil {
-    log.Println("error opening db:", err))
-  }
+var db *sql.DB
+
+func initDB() error {
+	db, err := sql.Open("duckdb", "../db/testdb.ddb")
+	if err != nil {
+		log.Println("error opening db:", err)
+	}
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS names (name VARCHAR)")
+	if err != nil {
+		log.Println("error creating table:", err)
+	}
+	return nil
 }
 
-func addNameToDB(name String) {
-  db, err := sql.Open("duckdb", "../db/testdb.ddb")
-  if err != nil {
-    log.Println("error opening db:", err))
-  }
-  db.Exec("CREATE TABLE IF NOT EXISTS names (name VARCHAR)")
-  _, err = db.Exec("INSERT INTO names (name) VALUES (?)", name)
-  if err != nil {
-    log.Println("error inserting name:", err)
-  }
+func addNameToDB(name string) {
+	_, err := db.Exec("INSERT INTO names (name) VALUES (?)", name)
+	if err != nil {
+		log.Println("error inserting name:", err)
+	}
 }
-
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,6 +54,11 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
+		if err := addNameToDB(data.FirstName); err != nil {
+			log.Println("Error adding name to DB:", err)
+			http.Error(w, "Error adding name to DB", http.StatusInternalServerError)
+			return
+		}
 		log.Println("Request received with first name:", data.FirstName)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
@@ -65,10 +70,14 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("Go version:", runtime.Version())
-  connectToDatabase()
+	if err := initDB(); err != nil {
+		log.Fatal("Error initializing database:", err)
+	}
+	defer db.Close()
+
 	http.Handle("/", http.FileServer(http.Dir("../frontend")))
-  firstName := http.HandleFunc("/api/firstName", enableCORS(fetchData))
-  addNameToDB(firstName)
+	http.HandleFunc("/api/firstName", enableCORS(fetchData))
+
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
