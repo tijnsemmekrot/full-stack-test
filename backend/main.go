@@ -6,7 +6,29 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+
+	"github.com/marcboeker/go-duckdb"
 )
+
+func connectToDatabase() {
+  db, err := sql.Open("duckdb", "../db/testdb.ddb")
+  if err != nil {
+    log.Println("error opening db:", err))
+  }
+}
+
+func addNameToDB(name String) {
+  db, err := sql.Open("duckdb", "../db/testdb.ddb")
+  if err != nil {
+    log.Println("error opening db:", err))
+  }
+  db.Exec("CREATE TABLE IF NOT EXISTS names (name VARCHAR)")
+  _, err = db.Exec("INSERT INTO names (name) VALUES (?)", name)
+  if err != nil {
+    log.Println("error inserting name:", err)
+  }
+}
+
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +65,10 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("Go version:", runtime.Version())
+  connectToDatabase()
 	http.Handle("/", http.FileServer(http.Dir("../frontend")))
-	http.HandleFunc("/api/firstName", enableCORS(fetchData))
+  firstName := http.HandleFunc("/api/firstName", enableCORS(fetchData))
+  addNameToDB(firstName)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
