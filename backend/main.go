@@ -2,14 +2,12 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -17,65 +15,68 @@ import (
 var conn *pgx.Conn
 
 func initDB() error {
-	readSecret := func(filename string) (string, error) {
-		// Try Render's secret path first
-		content, err := os.ReadFile("/etc/secrets/" + filename)
-		if err != nil {
-			// Fallback to local development
-			content, err = os.ReadFile(".env." + filename)
-			if err != nil {
-				return "", fmt.Errorf("missing %s: %w", filename, err)
-			}
-		}
-		return strings.TrimSpace(string(content)), nil
+	conn, err := pgx.Connect(context.Background(), os.Getenv("SUPABASE_PROJECT_URL"))
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	} else {
+		log.Println("Connected to the database")
 	}
+	defer conn.Close(context.Background())
+	//	readSecret := func(filename string) (string, error) {
+	//		// Try Render's secret path first
+	//		content, err := os.ReadFile("/etc/secrets/" + filename)
+	//		if err != nil {
+	//			// Fallback to local development
+	//			content, err = os.ReadFile(".env." + filename)
+	//			if err != nil {
+	//				return "", fmt.Errorf("missing %s: %w", filename, err)
+	//			}
+	//		}
+	//		return strings.TrimSpace(string(content)), nil
+	//	}
+	//
+	//	host, _ := readSecret("DB_HOST")
+	//	port, _ := readSecret("DB_PORT")
+	//	user, _ := readSecret("DB_USER")
+	//	password, _ := readSecret("DB_PASSWORD")
+	//	dbname, _ := readSecret("DB_NAME")
+	//	// Read required secrets
+	//
+	//	if host == "" || user == "" || dbname == "" {
+	//		return fmt.Errorf("missing required database credentials")
+	//	}
 
-	host, _ := readSecret("DB_HOST")
-	port, _ := readSecret("DB_PORT")
-	user, _ := readSecret("DB_USER")
-	password, _ := readSecret("DB_PASSWORD")
-	dbname, _ := readSecret("DB_NAME")
-	// Read required secrets
-
-	if host == "" || user == "" || dbname == "" {
-		return fmt.Errorf("missing required database credentials")
-	}
-
-	connConfig, err := pgx.ParseConfig(fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s",
-		host, port, user, password, dbname,
-	))
 	if err != nil {
 		return fmt.Errorf("config parse failed: %w", err)
 	}
 
-	connConfig.RuntimeParams["auth_type"] = "scram-sha-256"
-
-	connConfig.TLSConfig = &tls.Config{
-		MinVersion:         tls.VersionTLS12,
-		ServerName:         host,
-		InsecureSkipVerify: true,
-	}
-
-	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
-
-	conn, err = pgx.ConnectConfig(context.Background(), connConfig)
-	if err != nil {
-		return fmt.Errorf("unable to connect to database: %w", err)
-	}
-	if err := conn.Ping(context.Background()); err != nil {
-		return fmt.Errorf("database ping failed: %w", err)
-	}
-	_, err = conn.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS names (
-			id SERIAL PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			created_at TIMESTAMP DEFAULT NOW()
-		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating table: %w", err)
-	}
+	//	connConfig.RuntimeParams["auth_type"] = "scram-sha-256"
+	//
+	//	connConfig.TLSConfig = &tls.Config{
+	//		MinVersion:         tls.VersionTLS12,
+	//		ServerName:         host,
+	//		InsecureSkipVerify: true,
+	//	}
+	//
+	//	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
+	//
+	//	conn, err = pgx.ConnectConfig(context.Background(), connConfig)
+	//	if err != nil {
+	//		return fmt.Errorf("unable to connect to database: %w", err)
+	//	}
+	//	if err := conn.Ping(context.Background()); err != nil {
+	//		return fmt.Errorf("database ping failed: %w", err)
+	//	}
+	//	_, err = conn.Exec(context.Background(), `
+	//		CREATE TABLE IF NOT EXISTS names (
+	//			id SERIAL PRIMARY KEY,
+	//			name VARCHAR(255) NOT NULL,
+	//			created_at TIMESTAMP DEFAULT NOW()
+	//		)
+	//	`)
+	//	if err != nil {
+	//		return fmt.Errorf("error creating table: %w", err)
+	//	}
 	return nil
 }
 
