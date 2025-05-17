@@ -7,33 +7,30 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 )
 
 var conn *pgx.Conn
 
 func initDB() error {
-	exe, _ := exec.LookPath(os.Args[0])
-	exePath, _ := filepath.Abs(exe)
-	exeDir := filepath.Dir(exePath)
-	log.Println("Executable path:", exePath)
-	if err := godotenv.Load(filepath.Join(exeDir, ".env")); err != nil {
-		log.Println("No .env file found")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	// Validate required values
+	if host == "" || user == "" || dbname == "" {
+		return fmt.Errorf("missing required database credentials")
 	}
+
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-	)
+		user, password, host, port, dbname)
 
 	var err error
+
 	conn, err = pgx.Connect(context.Background(), connStr)
 	if err != nil {
 		return fmt.Errorf("unable to connect to database: %w", err)
