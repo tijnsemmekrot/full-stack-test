@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"runtime"
 
 	"github.com/jackc/pgx/v5"
@@ -101,6 +102,8 @@ func fetchData(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("Go version:", runtime.Version())
+	goVersion := os.Getenv("GO_VERSION")
+	log.Println("GO_VERSION:", goVersion)
 	if err := initDB(); err != nil {
 		log.Fatal("Error initializing database:", err)
 	}
