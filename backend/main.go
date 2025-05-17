@@ -16,7 +16,7 @@ import (
 var conn *pgx.Conn
 
 func initDB() error {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Println("No .env file found")
 	}
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
