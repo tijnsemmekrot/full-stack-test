@@ -1,30 +1,47 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"runtime"
 
-	_ "github.com/marcboeker/go-duckdb"
+	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
-var db *sql.DB
+var conn *pgx.Conn
 
 func initDB() error {
-	var err error
-	db, err = sql.Open("duckdb", "../db/testdb.ddb")
-	if err != nil {
-		return fmt.Errorf("error opening db: %w", err)
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
 	}
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_NAME"),
+	)
 
-	if err := db.Ping(); err != nil {
+	var err error
+	conn, err = pgx.Connect(context.Background(), connStr)
+	if err != nil {
+		return fmt.Errorf("unable to connect to database: %w", err)
+	}
+	if err := conn.Ping(context.Background()); err != nil {
 		return fmt.Errorf("database ping failed: %w", err)
 	}
-
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS names (name VARCHAR)")
+	_, err = conn.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS names (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
 	if err != nil {
 		return fmt.Errorf("error creating table: %w", err)
 	}
@@ -32,7 +49,10 @@ func initDB() error {
 }
 
 func addNameToDB(name string) error {
-	_, err := db.Exec("INSERT INTO names (name) VALUES (?)", name)
+	_, err := conn.Exec(context.Background(),
+		"INSERT INTO names (name) VALUES ($1)",
+		name,
+	)
 	if err != nil {
 		return fmt.Errorf("error inserting name: %w", err)
 	}
@@ -82,7 +102,7 @@ func main() {
 	if err := initDB(); err != nil {
 		log.Fatal("Error initializing database:", err)
 	}
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	http.Handle("/", http.FileServer(http.Dir("../frontend")))
 	http.HandleFunc("/api/firstName", enableCORS(fetchData))
