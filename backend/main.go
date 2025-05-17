@@ -15,10 +15,10 @@ import (
 var conn *pgx.Conn
 
 func initDB() error {
-	host := "postgres.ucexhnksccudzjcikyzi"
-	port := "5yoMY8x4Fzd3ge14"
-	user := "aws-0-eu-central-1.pooler.supabase.com"
-	password := "6543"
+	user := "postgres.ucexhnksccudzjcikyzi"
+	password := "5yoMY8x4Fzd3ge14"
+	host := "aws-0-eu-central-1.pooler.supabase.com"
+	port := "6543"
 	dbname := "postgres"
 
 	// Validate required values
