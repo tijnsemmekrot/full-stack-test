@@ -15,21 +15,67 @@ import (
 var conn *pgx.Conn
 
 func initDB() error {
-	user := "postgres.ucexhnksccudzjcikyzi"
-	password := "5yoMY8x4Fzd3ge14"
-	host := "aws-0-eu-central-1.pooler.supabase.com"
-	port := "6543"
-	dbname := "postgres"
+	readSecret := func(filename string) (string, error) {
+		// Try Render's secret path first
+		content, err := os.ReadFile("/etc/secrets/" + filename)
+		if err != nil {
+			// Fallback to local development
+			content, err = os.ReadFile(".env." + filename)
+			if err != nil {
+				return "", fmt.Errorf("missing %s: %w", filename, err)
+			}
+		}
+		return string(content), nil
+	}
+
+	// Read required secrets
+	host, err := readSecret("DB_HOST")
+	if err != nil {
+		return err
+	}
+	port, err := readSecret("DB_PORT")
+	if err != nil {
+		return err
+	}
+	user, err := readSecret("DB_USER")
+	if err != nil {
+		return err
+	}
+	password, err := readSecret("DB_PASSWORD")
+	if err != nil {
+		return err
+	}
+	dbname, err := readSecret("DB_NAME")
+	if err != nil {
+		return err
+	}
+
+	// Construct connection string
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
+		user,
+		password,
+		host,
+		port,
+		dbname,
+	)
+
+	// Log connection attempt (mask password in production)
+	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
+	//	host := os.Getenv("DB_HOST")
+	//	port := os.Getenv("DB_PORT")
+	//	user := os.Getenv("DB_USER")
+	//	password := os.Getenv("DB_PASSWORD")
+	//	dbname := os.Getenv("DB_NAME")
 
 	// Validate required values
 	if host == "" || user == "" || dbname == "" {
 		return fmt.Errorf("missing required database credentials")
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
-		user, password, host, port, dbname)
-
-	var err error
+	//	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
+	//		user, password, host, port, dbname)
+	//
+	//	var err error
 
 	conn, err = pgx.Connect(context.Background(), connStr)
 	if err != nil {
