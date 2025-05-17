@@ -21,6 +21,7 @@ func initDB() error {
 	exe, _ := exec.LookPath(os.Args[0])
 	exePath, _ := filepath.Abs(exe)
 	exeDir := filepath.Dir(exePath)
+	log.Println("Executable path:", exePath)
 	if err := godotenv.Load(filepath.Join(exeDir, ".env")); err != nil {
 		log.Println("No .env file found")
 	}
