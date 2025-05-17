@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	"github.com/jackc/pgx/v5"
@@ -16,7 +18,10 @@ import (
 var conn *pgx.Conn
 
 func initDB() error {
-	if err := godotenv.Load(".env"); err != nil {
+	exe, _ := exec.LookPath(os.Args[0])
+	exePath, _ := filepath.Abs(exe)
+	exeDir := filepath.Dir(exePath)
+	if err := godotenv.Load(filepath.Join(exeDir, ".env")); err != nil {
 		log.Println("No .env file found")
 	}
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
