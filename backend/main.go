@@ -51,7 +51,7 @@ func initDB() error {
 	}
 
 	// Construct connection string
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		user,
 		password,
 		host,
@@ -61,21 +61,11 @@ func initDB() error {
 
 	// Log connection attempt (mask password in production)
 	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
-	//	host := os.Getenv("DB_HOST")
-	//	port := os.Getenv("DB_PORT")
-	//	user := os.Getenv("DB_USER")
-	//	password := os.Getenv("DB_PASSWORD")
-	//	dbname := os.Getenv("DB_NAME")
 
 	// Validate required values
 	if host == "" || user == "" || dbname == "" {
 		return fmt.Errorf("missing required database credentials")
 	}
-
-	//	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
-	//		user, password, host, port, dbname)
-	//
-	//	var err error
 
 	conn, err = pgx.Connect(context.Background(), connStr)
 	if err != nil {
