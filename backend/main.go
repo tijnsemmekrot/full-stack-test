@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var conn *pgx.Conn
@@ -42,7 +41,7 @@ func initDB() error {
 		return fmt.Errorf("missing required database credentials")
 	}
 
-	connConfig, err := pgconn.ParseConfig(fmt.Sprintf(
+	connConfig, err := pgx.ParseConfig(fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
 		host, port, user, password, dbname,
 	))
@@ -58,7 +57,7 @@ func initDB() error {
 
 	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
 
-	conn, err = pgx.Connect(context.Background(), connConfig)
+	conn, err = pgx.ConnectConfig(context.Background(), connConfig)
 	if err != nil {
 		return fmt.Errorf("unable to connect to database: %w", err)
 	}
