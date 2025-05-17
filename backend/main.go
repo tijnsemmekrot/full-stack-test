@@ -7,27 +7,36 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+
+	_ "github.com/marcboeker/go-duckdb"
 )
 
 var db *sql.DB
 
 func initDB() error {
-	db, err := sql.Open("duckdb", "../db/testdb.ddb")
+	var err error
+	db, err = sql.Open("duckdb", "../db/testdb.ddb")
 	if err != nil {
-		log.Println("error opening db:", err)
+		return fmt.Errorf("error opening db: %w", err)
 	}
+
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("database ping failed: %w", err)
+	}
+
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS names (name VARCHAR)")
 	if err != nil {
-		log.Println("error creating table:", err)
+		return fmt.Errorf("error creating table: %w", err)
 	}
 	return nil
 }
 
-func addNameToDB(name string) {
+func addNameToDB(name string) error {
 	_, err := db.Exec("INSERT INTO names (name) VALUES (?)", name)
 	if err != nil {
-		log.Println("error inserting name:", err)
+		return fmt.Errorf("error inserting name: %w", err)
 	}
+	return nil
 }
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
