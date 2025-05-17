@@ -53,6 +53,7 @@ func initDB() error {
 
 	connConfig.TLSConfig = &tls.Config{
 		MinVersion: tls.VersionTLS12,
+		ServerName: host,
 	}
 
 	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
