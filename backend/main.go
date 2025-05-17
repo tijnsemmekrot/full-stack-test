@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"runtime"
 
 	"github.com/jackc/pgx/v5"
@@ -15,11 +14,11 @@ import (
 var conn *pgx.Conn
 
 func initDB() error {
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
+	host := "postgres.ucexhnksccudzjcikyzi"
+	port := "5yoMY8x4Fzd3ge14"
+	user := "aws-0-eu-central-1.pooler.supabase.com"
+	password := "6543"
+	dbname := "postgres"
 
 	// Validate required values
 	if host == "" || user == "" || dbname == "" {
