@@ -42,7 +42,7 @@ func initDB() error {
 	}
 
 	connConfig, err := pgx.ParseConfig(fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
+		"host=%s port=%s user=%s password=%s dbname=%s",
 		host, port, user, password, dbname,
 	))
 	if err != nil {
@@ -52,8 +52,9 @@ func initDB() error {
 	connConfig.RuntimeParams["auth_type"] = "scram-sha-256"
 
 	connConfig.TLSConfig = &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		ServerName: host,
+		MinVersion:         tls.VersionTLS12,
+		ServerName:         host,
+		InsecureSkipVerify: true,
 	}
 
 	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
