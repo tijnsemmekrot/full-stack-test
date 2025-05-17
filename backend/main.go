@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var conn *pgx.Conn
@@ -25,49 +28,37 @@ func initDB() error {
 				return "", fmt.Errorf("missing %s: %w", filename, err)
 			}
 		}
-		return string(content), nil
+		return strings.TrimSpace(string(content)), nil
 	}
 
+	host, _ := readSecret("DB_HOST")
+	port, _ := readSecret("DB_PORT")
+	user, _ := readSecret("DB_USER")
+	password, _ := readSecret("DB_PASSWORD")
+	dbname, _ := readSecret("DB_NAME")
 	// Read required secrets
-	host, err := readSecret("DB_HOST")
-	if err != nil {
-		return err
-	}
-	port, err := readSecret("DB_PORT")
-	if err != nil {
-		return err
-	}
-	user, err := readSecret("DB_USER")
-	if err != nil {
-		return err
-	}
-	password, err := readSecret("DB_PASSWORD")
-	if err != nil {
-		return err
-	}
-	dbname, err := readSecret("DB_NAME")
-	if err != nil {
-		return err
-	}
 
-	// Construct connection string
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		user,
-		password,
-		host,
-		port,
-		dbname,
-	)
-
-	// Log connection attempt (mask password in production)
-	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
-
-	// Validate required values
 	if host == "" || user == "" || dbname == "" {
 		return fmt.Errorf("missing required database credentials")
 	}
 
-	conn, err = pgx.Connect(context.Background(), connStr)
+	connConfig, err := pgconn.ParseConfig(fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
+		host, port, user, password, dbname,
+	))
+	if err != nil {
+		return fmt.Errorf("config parse failed: %w", err)
+	}
+
+	connConfig.RuntimeParams["auth_type"] = "scram-sha-256"
+
+	connConfig.TLSConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
+
+	conn, err = pgx.Connect(context.Background(), connConfig)
 	if err != nil {
 		return fmt.Errorf("unable to connect to database: %w", err)
 	}
