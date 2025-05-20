@@ -13,9 +13,7 @@ import (
 )
 
 func initDB() {
-	// RAW_PASSWORD := os.Getenv("MONGO_DB_PASSWORD")
-	// MONGO_PASSWORD := url.QueryEscape(RAW_PASSWORD)
-	MONGO_PASSWORD := "347BZKrLcAyVTFAJ"
+	MONGO_PASSWORD := os.Getenv("MONGO_DB_PASSWORD")
 	uri := "mongodb+srv://tsemmekrot:" + MONGO_PASSWORD +
 		"@full-stack-test.lf9w6dv.mongodb.net/" +
 		"?retryWrites=true&w=majority&appName=full-stack-test"
