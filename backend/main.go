@@ -15,9 +15,9 @@ import (
 )
 
 func initDB() {
-  MONGO_PASSWORD := os.Getenv("MONGO_DB_PASSWORD")
+	MONGO_PASSWORD := os.Getenv("MONGO_DB_PASSWORD")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI("mongodb+srv://tsemmekrot:"MONGO_PASSWORD"@full-stack-test.lf9w6dv.mongodb.net/?retryWrites=true&w=majority&appName=full-stack-test").SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI("mongodb+srv://tsemmekrot:" + MONGO_PASSWORD + "@full-stack-test.lf9w6dv.mongodb.net/?retryWrites=true&w=majority&appName=full-stack-test").SetServerAPIOptions(serverAPI)
 
 	client, err := mongo.Connect(opts)
 	if err != nil {
