@@ -9,75 +9,30 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/jackc/pgx/v5"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
-var conn *pgx.Conn
+func initDB() {
+  MONGO_PASSWORD := os.Getenv("MONGO_DB_PASSWORD")
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().ApplyURI("mongodb+srv://tsemmekrot:"MONGO_PASSWORD"@full-stack-test.lf9w6dv.mongodb.net/?retryWrites=true&w=majority&appName=full-stack-test").SetServerAPIOptions(serverAPI)
 
-func initDB() error {
-	conn, err := pgx.Connect(context.Background(), os.Getenv("SUPABASE_PROJECT_URL"))
+	client, err := mongo.Connect(opts)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
-	} else {
-		log.Println("Connected to the database")
+		panic(err)
 	}
-	defer conn.Close(context.Background())
-	//	readSecret := func(filename string) (string, error) {
-	//		// Try Render's secret path first
-	//		content, err := os.ReadFile("/etc/secrets/" + filename)
-	//		if err != nil {
-	//			// Fallback to local development
-	//			content, err = os.ReadFile(".env." + filename)
-	//			if err != nil {
-	//				return "", fmt.Errorf("missing %s: %w", filename, err)
-	//			}
-	//		}
-	//		return strings.TrimSpace(string(content)), nil
-	//	}
-	//
-	//	host, _ := readSecret("DB_HOST")
-	//	port, _ := readSecret("DB_PORT")
-	//	user, _ := readSecret("DB_USER")
-	//	password, _ := readSecret("DB_PASSWORD")
-	//	dbname, _ := readSecret("DB_NAME")
-	//	// Read required secrets
-	//
-	//	if host == "" || user == "" || dbname == "" {
-	//		return fmt.Errorf("missing required database credentials")
-	//	}
-
-	if err != nil {
-		return fmt.Errorf("config parse failed: %w", err)
+	defer func() {
+		if err = client.Disconnect(context.TODO()); err != nil {
+			panic(err)
+		}
+	}()
+	// Send a ping to confirm a successful connection
+	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		panic(err)
 	}
-
-	//	connConfig.RuntimeParams["auth_type"] = "scram-sha-256"
-	//
-	//	connConfig.TLSConfig = &tls.Config{
-	//		MinVersion:         tls.VersionTLS12,
-	//		ServerName:         host,
-	//		InsecureSkipVerify: true,
-	//	}
-	//
-	//	log.Printf("Connecting to: postgres://%s:***@%s:%s/%s", user, host, port, dbname)
-	//
-	//	conn, err = pgx.ConnectConfig(context.Background(), connConfig)
-	//	if err != nil {
-	//		return fmt.Errorf("unable to connect to database: %w", err)
-	//	}
-	//	if err := conn.Ping(context.Background()); err != nil {
-	//		return fmt.Errorf("database ping failed: %w", err)
-	//	}
-	//	_, err = conn.Exec(context.Background(), `
-	//		CREATE TABLE IF NOT EXISTS names (
-	//			id SERIAL PRIMARY KEY,
-	//			name VARCHAR(255) NOT NULL,
-	//			created_at TIMESTAMP DEFAULT NOW()
-	//		)
-	//	`)
-	//	if err != nil {
-	//		return fmt.Errorf("error creating table: %w", err)
-	//	}
-	return nil
+	fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
 }
 
 func addNameToDB(name string) error {
@@ -133,17 +88,16 @@ func main() {
 	log.Println("Go version:", runtime.Version())
 	goVersion := os.Getenv("GO_VERSION")
 	log.Println("GO_VERSION:", goVersion)
-	if err := initDB(); err != nil {
-		log.Fatal("Error initializing database:", err)
-	}
-	defer conn.Close(context.Background())
+	initDB()
 
-	http.Handle("/", http.FileServer(http.Dir("../frontend")))
-	http.HandleFunc("/api/firstName", enableCORS(fetchData))
-
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
-	fmt.Println("Server started at http://localhost:8080")
+	// http.Handle("/", http.FileServer(http.Dir("../frontend")))
+	// http.HandleFunc("/api/firstName", enableCORS(fetchData))
+	//
+	// err := http.ListenAndServe(":8080", nil)
+	//
+	//	if err != nil {
+	//		log.Fatal("ListenAndServe: ", err)
+	//	}
+	//
+	// fmt.Println("Server started at http://localhost:8080")
 }
