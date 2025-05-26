@@ -43,7 +43,7 @@ func initDB() {
 		Name string
 	}
 	coll := client.Database("full-stack-test").Collection("names")
-	doc := Person{Name: "test"}
+	doc := Person{Name: "test-1"}
 	restul, err := coll.InsertOne(context.TODO(), doc)
 	log.Printf("Inserted document with ID: %v\n", restul.InsertedID)
 }
