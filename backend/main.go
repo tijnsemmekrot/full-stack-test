@@ -99,4 +99,5 @@ func main() {
 	goVersion := os.Getenv("GO_VERSION")
 	log.Println("GO_VERSION:", goVersion)
 	initDB()
+	http.HandleFunc("/api/first-name", enableCORS(Handler))
 }
