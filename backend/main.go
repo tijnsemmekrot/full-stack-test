@@ -68,6 +68,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	log.Printf("Inserting name: %q into MongoDB", req.FirstName)
+
 	doc := bson.D{{Key: "name", Value: req.FirstName}}
 	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
