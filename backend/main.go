@@ -7,20 +7,24 @@ import (
 	"os"
 	"runtime"
 
+	//"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
+var (
+	client *mongo.Client
+	err    error
+)
+
 func initDB() {
-	MONGO_PASSWORD := os.Getenv("MONGO_DB_PASSWORD")
-	uri := "mongodb+srv://tsemmekrot:" + MONGO_PASSWORD +
+	mongo_pass := os.Getenv("MONGO_DB_PASSWORD")
+	uri := "mongodb+srv://tsemmekrot:" + mongo_pass +
 		"@full-stack-test.lf9w6dv.mongodb.net/" +
 		"?retryWrites=true&w=majority&appName=full-stack-test"
-	// Use the SetServerAPIOptions() method to set the version of the Stable API on the client
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
-	// Create a new client and connect to the server
 	client, err := mongo.Connect(opts)
 	if err != nil {
 		panic(err)
@@ -30,14 +34,23 @@ func initDB() {
 			panic(err)
 		}
 	}()
-	// Send a ping to confirm a successful connection
+
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		panic(err)
 	}
 	log.Println("Pinged your deployment. You successfully connected to MongoDB!")
+	type Person struct {
+		Name string
+	}
+	coll := client.Database("full-stack-test").Collection("names")
+	doc := Person{Name: "test"}
+	restul, err := coll.InsertOne(context.TODO(), doc)
+	log.Printf("Inserted document with ID: %v\n", restul.InsertedID)
 }
 
 //func addNameToDB(name string) error {
+//	client, err := mongo.Connect(opts)
+//	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27017"))
 //	_, err := conn.Exec(context.Background(),
 //		"INSERT INTO names (name) VALUES ($1)",
 //		name,
