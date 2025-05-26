@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -53,6 +52,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	type FirstNameRequest struct {
 		FirstName string `json:"first_name"`
 	}
+	type Person struct {
+		Name string `bson:"name"`
+	}
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
@@ -69,9 +71,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	log.Printf("Inserting name: %q into MongoDB", req.FirstName)
-
-	doc := bson.D{{Key: "name", Value: req.FirstName}}
-	result, err := collection.InsertOne(ctx, doc)
+	person := Person{Name: req.FirstName}
+	result, err := collection.InsertOne(ctx, person)
 	if err != nil {
 		http.Error(w, "Failed to insert document", http.StatusInternalServerError)
 		log.Printf("Insert error: %v\n", err)
