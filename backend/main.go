@@ -2,20 +2,23 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
-	//"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
 var (
-	client *mongo.Client
-	err    error
+	client     *mongo.Client
+	collection *mongo.Collection
+	err        error
 )
 
 func initDB() {
@@ -42,24 +45,39 @@ func initDB() {
 	type Person struct {
 		Name string
 	}
-	coll := client.Database("full-stack-test").Collection("names")
-	doc := Person{Name: "test-1"}
-	restul, err := coll.InsertOne(context.TODO(), doc)
-	log.Printf("Inserted document with ID: %v\n", restul.InsertedID)
+	collection = client.Database("full-stack-test").Collection("names")
+	log.Println("Connected to mongoDB")
 }
 
-//func addNameToDB(name string) error {
-//	client, err := mongo.Connect(opts)
-//	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27017"))
-//	_, err := conn.Exec(context.Background(),
-//		"INSERT INTO names (name) VALUES ($1)",
-//		name,
-//	)
-//	if err != nil {
-//		return fmt.Errorf("error inserting name: %w", err)
-//	}
-//	return nil
-//}
+func Handler(w http.ResponseWriter, r *http.Request) {
+	type FirstNameRequest struct {
+		FirstName string `json:"first_name"`
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req FirstNameRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	doc := bson.D{{Key: "name", Value: req.FirstName}}
+	result, err := collection.InsertOne(ctx, doc)
+	if err != nil {
+		http.Error(w, "Failed to insert document", http.StatusInternalServerError)
+		log.Printf("Insert error: %v\n", err)
+		return
+	}
+	log.Printf("Inserted document with ID: %v\n", result.InsertedID)
+	w.WriteHeader(http.StatusOK)
+}
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -76,43 +94,9 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-//func fetchData(w http.ResponseWriter, r *http.Request) {
-//	if r.Method == "POST" {
-//		var data struct {
-//			FirstName string `json:"first_name"`
-//		}
-//		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-//			http.Error(w, "Invalid JSON", http.StatusBadRequest)
-//			return
-//		}
-//		if err := addNameToDB(data.FirstName); err != nil {
-//			log.Println("Error adding name to DB:", err)
-//			http.Error(w, "Error adding name to DB", http.StatusInternalServerError)
-//			return
-//		}
-//		log.Println("Request received with first name:", data.FirstName)
-//		w.Header().Set("Content-Type", "application/json")
-//		json.NewEncoder(w).Encode(map[string]string{
-//			"status":   "success",
-//			"received": data.FirstName,
-//		})
-//	}
-//}
-
 func main() {
 	log.Println("Go version:", runtime.Version())
 	goVersion := os.Getenv("GO_VERSION")
 	log.Println("GO_VERSION:", goVersion)
 	initDB()
-
-	// http.Handle("/", http.FileServer(http.Dir("../frontend")))
-	// http.HandleFunc("/api/firstName", enableCORS(fetchData))
-	//
-	// err := http.ListenAndServe(":8080", nil)
-	//
-	//	if err != nil {
-	//		log.Fatal("ListenAndServe: ", err)
-	//	}
-	//
-	// fmt.Println("Server started at http://localhost:8080")
 }

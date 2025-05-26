@@ -2,7 +2,10 @@ module full-stack-test
 
 go 1.24.0
 
-require go.mongodb.org/mongo-driver/v2 v2.2.1
+require (
+	go.mongodb.org/mongo-driver v1.17.3
+	go.mongodb.org/mongo-driver/v2 v2.2.1
+)
 
 require (
 	github.com/golang/snappy v1.0.0 // indirect
