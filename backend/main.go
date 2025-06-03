@@ -83,9 +83,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
 }
 
-//func getData() {
-//	opts := options.Find()
-//}
+func getData(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := collection.Find(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to retrieve documents: %v\n", err)
+	}
+	log.Printf("Retrieved documents: %v\n", result)
+}
 
 // test
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
@@ -109,6 +116,7 @@ func main() {
 	log.Println("GO_VERSION:", goVersion)
 	initDB()
 	http.HandleFunc("/api/firstName", enableCORS(Handler))
+	http.HandleFunc("/api/getData", enableCORS(getData))
 	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

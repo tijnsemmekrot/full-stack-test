@@ -18,3 +18,21 @@ document.getElementById('nameForm').addEventListener('submit', async (e) => {
     console.error('Failed to submit:', error);
   }
 });
+
+document.getElementById('getDataForm').addEventListener('getData', async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch('https://full-stack-test-tp19.onrender.com/api/getData', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'  // Required for JSON
+      }
+    });
+
+    const result = await response.json();
+    console.log('Data from backend:', result);
+  } catch (error) {
+    console.error('Failed to fetch data:', error);
+  }
+});
