@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -84,14 +85,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Only GET allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := collection.Find(ctx, nil)
+	result, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		log.Printf("Failed to retrieve documents: %v\n", err)
 	}
 	log.Printf("Retrieved documents: %v\n", result)
+	json.NewEncoder(w).Encode(result)
 }
 
 // test
