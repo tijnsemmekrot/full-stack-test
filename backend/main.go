@@ -74,8 +74,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Inserted document with ID: %v\n", result.InsertedID)
+
+	type Response struct {
+		Message string `json:"message"`
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
 }
+
+//func getData() {
+//	opts := options.Find()
+//}
 
 // test
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
