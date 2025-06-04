@@ -93,45 +93,13 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := collection.Find(ctx, bson.D{}) // empty filter to get all docs
+	result, err := collection.Find(ctx, bson.D{})
 	if err != nil {
-		http.Error(w, "Failed to retrieve documents", http.StatusInternalServerError)
-		log.Printf("Find error: %v\n", err)
-		return
+		log.Printf("Failed to retrieve documents: %v\n", err)
 	}
-	defer cursor.Close(ctx)
-
-	// Define a struct that matches the stored documents
-	type Person struct {
-		Name string `bson:"name" json:"name"`
-	}
-
-	var people []Person
-	if err = cursor.All(ctx, &people); err != nil {
-		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
-		log.Printf("Decode error: %v\n", err)
-		return
-	}
-
+	log.Printf("Retrieved documents: %v\n", result)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(people)
-	//	if r.Method != http.MethodGet {
-	//		http.Error(w, "Only GET allowed", http.StatusMethodNotAllowed)
-	//		return
-	//	}
-	//
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancel()
-	//
-	// result, err := collection.Find(ctx, bson.D{})
-	//
-	//	if err != nil {
-	//		log.Printf("Failed to retrieve documents: %v\n", err)
-	//	}
-	//
-	// log.Printf("Retrieved documents: %v\n", result)
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(result)
 }
 
 // test
