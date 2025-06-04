@@ -19,7 +19,7 @@ document.getElementById('nameForm').addEventListener('submit', async (e) => {
   }
 });
 
-document.getElementById('getDataForm').addEventListener('getData', async (e) => {
+document.getElementById('getDataForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   try {
