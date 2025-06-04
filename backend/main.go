@@ -98,6 +98,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to retrieve documents: %v\n", err)
 	}
 	log.Printf("Retrieved documents: %v\n", result)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
 
