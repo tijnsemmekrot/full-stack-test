@@ -95,8 +95,21 @@ func getData(w http.ResponseWriter, r *http.Request) {
 
 	result, err := collection.Find(ctx, bson.D{})
 	if err != nil {
-		log.Printf("Failed to retrieve documents: %v\n", err)
+		http.Error(w, "Failed to retrieve documents", http.StatusInternalServerError)
+		return
 	}
+	defer result.Close(ctx)
+
+	type person struct {
+		Name string `bson:"name" json:"name"`
+	}
+
+	var persons []person
+	if err := result.All(ctx, &persons); err != nil {
+		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
+		return
+	}
+
 	log.Printf("Retrieved documents: %v\n", result)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
