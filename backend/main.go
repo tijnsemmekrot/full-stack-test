@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -132,12 +131,14 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
-	log.Println("Go version:", runtime.Version())
 	goVersion := os.Getenv("GO_VERSION")
 	log.Println("GO_VERSION:", goVersion)
+
 	initDB()
+
 	http.HandleFunc("/api/firstName", enableCORS(Handler))
 	http.HandleFunc("/api/getData", enableCORS(getData))
+
 	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
