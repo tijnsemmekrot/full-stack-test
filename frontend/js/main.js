@@ -38,9 +38,15 @@ document.getElementById('getDataForm').addEventListener('submit', async (e) => {
 
     result.forEach(person => {
       const row = document.createElement('tr');
-      const cell = document.createElement('td');
-      cell.textContent = person.name;
-      row.appendChild(cell);
+
+      const idCell = document.createElement('td');
+      idCell.textContent = person._id || 'N/A'; // fallback if no _id
+      row.appendChild(idCell);
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = person.name;
+      row.appendChild(nameCell);
+
       tableBody.appendChild(row);
     });
   } catch (error) {
