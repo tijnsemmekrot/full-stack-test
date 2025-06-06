@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -100,60 +99,20 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 	defer result.Close(ctx)
 
-	type rawPerson struct {
-		ID   primitive.ObjectID `bson:"_id"`
-		Name string             `bson:"name"`
-	}
-
 	type person struct {
 		ID   string `json:"_id"`
-		Name string `json:"name"`
+		Name string `bson:"name" json:"name"`
 	}
 
 	var persons []person
-
-	for result.Next(ctx) {
-		var raw rawPerson
-		if err := result.Decode(&raw); err != nil {
-			log.Printf("Decode error: %v", err)
-			http.Error(w, "Failed to decode document", http.StatusInternalServerError)
-			return
-		}
-
-		// Convert ObjectID to hex string
-		persons = append(persons, person{
-			ID:   raw.ID.Hex(),
-			Name: raw.Name,
-		})
-	}
-
-	if err := result.Err(); err != nil {
-		log.Printf("Cursor error: %v", err)
-		http.Error(w, "Cursor error", http.StatusInternalServerError)
+	if err := result.All(ctx, &persons); err != nil {
+		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("Retrieved documents: %v\n", result)
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(persons); err != nil {
-		log.Printf("JSON encoding error: %v", err)
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
-
-	//	type person struct {
-	//		ID string `json:"_id"`
-	//		Name string `bson:"name" json:"name"`
-	//	}
-	//
-	// var persons []person
-	//
-	//	if err := result.All(ctx, &persons); err != nil {
-	//		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
-	//		return
-	//	}
-	//
-	// log.Printf("Retrieved documents: %v\n", result)
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(persons)
+	json.NewEncoder(w).Encode(persons)
 }
 
 // test
