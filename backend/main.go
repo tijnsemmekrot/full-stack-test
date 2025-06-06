@@ -101,19 +101,45 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	defer result.Close(ctx)
 
 	type person struct {
-		ID   primitive.ObjectID `bson:"_id" json:"_id"`
-		Name string             `bson:"name" json:"name"`
+		ID string `json:"_id"`
+		Name string `bson:"name" json:"name"`
+	}
+
+	type rawPerson struct {
+		ID   primitive.ObjectID `bson:"_id"`
+		Name string             `bson:"name"`
+	}
+
+	// Struct for clean JSON response
+	type person struct {
+		ID   string `json:"_id"`
+		Name string `json:"name"`
 	}
 
 	var persons []person
-	if err := result.All(ctx, &persons); err != nil {
-		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
-		return
-	}
 
-	log.Printf("Retrieved documents: %v\n", result)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(persons)
+	for result.Next(ctx) {
+		var raw rawPerson
+		if err := result.Decode(&raw); err != nil {
+			http.Error(w, "Failed to decode document", http.StatusInternalServerError)
+			return
+		}
+
+		// Convert ObjectID to string
+		persons = append(persons, person{
+			ID:   raw.ID.Hex(),
+			Name: raw.Name,
+		})
+
+//	var persons []person
+//	if err := result.All(ctx, &persons); err != nil {
+//		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
+//		return
+//	}
+//
+//	log.Printf("Retrieved documents: %v\n", result)
+//	w.Header().Set("Content-Type", "application/json")
+//	json.NewEncoder(w).Encode(persons)
 }
 
 // test
