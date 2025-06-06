@@ -100,17 +100,11 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 	defer result.Close(ctx)
 
-	type person struct {
-		ID string `json:"_id"`
-		Name string `bson:"name" json:"name"`
-	}
-
 	type rawPerson struct {
 		ID   primitive.ObjectID `bson:"_id"`
 		Name string             `bson:"name"`
 	}
 
-	// Struct for clean JSON response
 	type person struct {
 		ID   string `json:"_id"`
 		Name string `json:"name"`
@@ -121,25 +115,45 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	for result.Next(ctx) {
 		var raw rawPerson
 		if err := result.Decode(&raw); err != nil {
+			log.Printf("Decode error: %v", err)
 			http.Error(w, "Failed to decode document", http.StatusInternalServerError)
 			return
 		}
 
-		// Convert ObjectID to string
+		// Convert ObjectID to hex string
 		persons = append(persons, person{
 			ID:   raw.ID.Hex(),
 			Name: raw.Name,
 		})
+	}
 
-//	var persons []person
-//	if err := result.All(ctx, &persons); err != nil {
-//		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
-//		return
-//	}
-//
-//	log.Printf("Retrieved documents: %v\n", result)
-//	w.Header().Set("Content-Type", "application/json")
-//	json.NewEncoder(w).Encode(persons)
+	if err := result.Err(); err != nil {
+		log.Printf("Cursor error: %v", err)
+		http.Error(w, "Cursor error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(persons); err != nil {
+		log.Printf("JSON encoding error: %v", err)
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+
+	//	type person struct {
+	//		ID string `json:"_id"`
+	//		Name string `bson:"name" json:"name"`
+	//	}
+	//
+	// var persons []person
+	//
+	//	if err := result.All(ctx, &persons); err != nil {
+	//		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
+	//		return
+	//	}
+	//
+	// log.Printf("Retrieved documents: %v\n", result)
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(persons)
 }
 
 // test
