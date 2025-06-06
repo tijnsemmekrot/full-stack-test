@@ -100,6 +100,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	defer result.Close(ctx)
 
 	type person struct {
+		ID   string `bson:"_id" json:"id"`
 		Name string `bson:"name" json:"name"`
 	}
 
