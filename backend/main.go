@@ -81,7 +81,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
+	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB! ID: " + result.InsertedID.(primitive.ObjectID).Hex()})
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
@@ -100,39 +100,23 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 	defer result.Close(ctx)
 
-	type Person struct {
+	type person struct {
 		ID   string `bson:"_id" json:"id"`
 		Name string `bson:"name" json:"name"`
 	}
 
-	var persons []Person
-	for result.Next(ctx) {
-		var doc struct {
-			ID   primitive.ObjectID `bson:"_id"`
-			Name string             `bson:"name"`
-		}
-		if err := result.Decode(&doc); err != nil {
-			log.Printf("Document decode error: %v", err)
-			continue // or return error if you prefer
-		}
-		persons = append(persons, Person{
-			ID:   doc.ID.Hex(), // Convert ObjectID to string
-			Name: doc.Name,
-		})
-	}
-
-	if err := result.Err(); err != nil {
-		log.Printf("result error: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Data processing failed"})
+	var persons []person
+	if err := result.All(ctx, &persons); err != nil {
+		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
 		return
 	}
 
-	// Successful response
+	log.Printf("Retrieved documents: %v\n", result)
+
 	if err := json.NewEncoder(w).Encode(persons); err != nil {
-		log.Printf("JSON encode error: %v", err)
+		log.Printf("Failed to encode response: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to generate response"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to encode response"})
 	}
 }
 
