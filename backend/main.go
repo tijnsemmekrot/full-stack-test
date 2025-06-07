@@ -112,8 +112,12 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Retrieved documents: %v\n", result)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(persons)
+
+	if err := json.NewEncoder(w).Encode(persons); err != nil {
+		log.Printf("Failed to encode response: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to encode response"})
+	}
 }
 
 // test
