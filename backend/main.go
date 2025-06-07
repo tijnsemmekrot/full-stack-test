@@ -100,7 +100,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	defer result.Close(ctx)
 
 	type person struct {
-		ID   string `bson:"_id" json:"id"`
+		ID   string `json:"_id"`
 		Name string `bson:"name" json:"name"`
 	}
 
@@ -109,14 +109,10 @@ func getData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
 		return
 	}
-	//
-	log.Printf("Retrieved documents: %v\n", result)
 
-	if err := json.NewEncoder(w).Encode(persons); err != nil {
-		log.Printf("Failed to encode response: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to encode response"})
-	}
+	log.Printf("Retrieved documents: %v\n", result)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(persons)
 }
 
 // test
