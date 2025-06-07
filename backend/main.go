@@ -102,12 +102,12 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := collection.Find(ctx, bson.D{})
+	cursor, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		http.Error(w, "Failed to retrieve documents", http.StatusInternalServerError)
 		return
 	}
-	defer result.Close(ctx)
+	defer cursor.Close(ctx)
 
 	type person struct {
 		ID   string `json:"_id"`
@@ -115,15 +115,75 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var persons []person
-	if err := result.All(ctx, &persons); err != nil {
-		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
+
+	// Iterate through each document
+	for cursor.Next(ctx) {
+		var doc struct {
+			ID   interface{} `bson:"_id"`
+			Name string      `bson:"name"`
+		}
+
+		if err := cursor.Decode(&doc); err != nil {
+			http.Error(w, "Failed to decode document", http.StatusInternalServerError)
+			return
+		}
+
+		// Convert ID to string
+		var idStr string
+		if oid, ok := doc.ID.(primitive.ObjectID); ok {
+			idStr = oid.Hex()
+		} else {
+			idStr = fmt.Sprintf("%v", doc.ID)
+		}
+
+		persons = append(persons, person{
+			ID:   idStr,
+			Name: doc.Name,
+		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		http.Error(w, "Cursor error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Retrieved documents: %v\n", result)
+	log.Printf("Retrieved %d documents\n", len(persons))
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(persons)
 }
+
+//
+//func getData(w http.ResponseWriter, r *http.Request) {
+//	if r.Method != http.MethodGet {
+//		http.Error(w, "Only GET allowed", http.StatusMethodNotAllowed)
+//		return
+//	}
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+//	defer cancel()
+//
+//	result, err := collection.Find(ctx, bson.D{})
+//	if err != nil {
+//		http.Error(w, "Failed to retrieve documents", http.StatusInternalServerError)
+//		return
+//	}
+//	defer result.Close(ctx)
+//
+//	type person struct {
+//		ID   string `json:"_id"`
+//		Name string `bson:"name" json:"name"`
+//	}
+//
+//	var persons []person
+//	if err := result.All(ctx, &persons); err != nil {
+//		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
+//		return
+//	}
+//
+//	log.Printf("Retrieved documents: %v\n", result)
+//	w.Header().Set("Content-Type", "application/json")
+//	json.NewEncoder(w).Encode(persons)
+//}
 
 // test
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
