@@ -1,7 +1,7 @@
 package models
 
 type FirstNameRequest struct {
-	FirstName string `json:"first_name"`
+	Name string `json:"first_name"`
 }
 
 type Person struct {

@@ -15,7 +15,7 @@ func main() {
 
 	db.InitDB()
 
-	http.HandleFunc("/api/firstName", middleware.EnableCORS(handlers.Handler))
+	http.HandleFunc("/api/firstName", middleware.EnableCORS(handlers.InsertFirstName))
 	http.HandleFunc("/api/getData", middleware.EnableCORS(handlers.GetDataHandler))
 
 	log.Println("Listening on :8080")
