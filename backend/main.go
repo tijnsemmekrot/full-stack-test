@@ -73,7 +73,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Insert error: %v\n", err)
 		return
 	}
-	log.Printf("Inserted document with ID: %v\n", result.InsertedID)
+
+	id := result.InsertedID
+	log.Printf("Inserted document with ID: %v\n", id)
 
 	type Response struct {
 		Message string `json:"message"`
@@ -81,7 +83,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!" + result.InsertedID.(string)})
+	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
