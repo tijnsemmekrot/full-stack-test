@@ -77,10 +77,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	type Response struct {
 		Message string `json:"message"`
+		ID      string `json:"id"`
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
+	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!" + result.InsertedID.(string)})
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
