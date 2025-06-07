@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -100,8 +101,8 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	defer result.Close(ctx)
 
 	type person struct {
-		ID   string `json:"_id"`
-		Name string `bson:"name" json:"name"`
+		ID   primitive.ObjectID `bson:"_id" json:"id"`
+		Name string             `bson:"name" json:"name"`
 	}
 
 	var persons []person
