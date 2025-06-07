@@ -39,7 +39,7 @@ func initDB() {
 	type Person struct {
 		Name string
 	}
-	collection = client.Database("full-stack-test").Collection("names")
+	collection = client.Database("full-stack-test").Collection("expenses")
 	log.Println("Connected to mongoDB")
 }
 
