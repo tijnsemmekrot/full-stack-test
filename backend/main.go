@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -74,8 +76,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := result.InsertedID
-	log.Printf("Inserted document with ID: %v\n", id)
+	var idStr string
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		idStr = oid.Hex()
+	} else {
+		idStr = fmt.Sprintf("%v", result.InsertedID)
+	}
+	log.Printf("Inserted document with ID: %v\n", idStr)
 
 	type Response struct {
 		Message string `json:"message"`
@@ -83,7 +90,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
+	//	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB!"})
+	json.NewEncoder(w).Encode(Response{
+		Message: req.FirstName + " added to MongoDB!",
+		ID:      idStr,
+	})
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
