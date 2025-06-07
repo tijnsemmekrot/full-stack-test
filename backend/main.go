@@ -110,7 +110,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode documents", http.StatusInternalServerError)
 		return
 	}
-
+	//
 	log.Printf("Retrieved documents: %v\n", result)
 
 	if err := json.NewEncoder(w).Encode(persons); err != nil {
