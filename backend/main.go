@@ -81,7 +81,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB! ID: " + result.InsertedID.(primitive.ObjectID).Hex()})
+	json.NewEncoder(w).Encode(Response{Message: req.FirstName + " added to MongoDB! ID: %v", result.InsertedID)
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
