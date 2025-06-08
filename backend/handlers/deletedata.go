@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo-driver/v2/primitive"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func DeleteData(w http.ResponseWriter, r *http.Request) {
