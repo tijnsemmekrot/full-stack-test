@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo-driver/v2/primitive"
 )
 
 func DeleteData(w http.ResponseWriter, r *http.Request) {
@@ -26,10 +27,21 @@ func DeleteData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Id == "" {
+		http.Error(w, "ID cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid ID format: %v", err), http.StatusBadRequest)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := db.Collection.DeleteOne(ctx, bson.M{"_id": req.Id})
+	result, err := db.Collection.DeleteOne(ctx, bson.M{"_id": objectID})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error deleting document: %v", err), http.StatusInternalServerError)
 		return
