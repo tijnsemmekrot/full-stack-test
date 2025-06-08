@@ -88,24 +88,35 @@ function updateDeleteButton() {
 deleteButton.addEventListener('click', async () => {
   if (selectedIds.length === 0) return;
 
+  console.log("Attempting to delete these IDs:", selectedIds); // Debug log
+
   try {
-    // Delete each selected item
-    await Promise.all(selectedIds.map(id =>
-      fetch('https://full-stack-test-tp19.onrender.com/api/deleteData', {
+    const deletePromises = selectedIds.map(id => {
+      console.log("Preparing delete request for ID:", id); // Debug log
+      return fetch('https://full-stack-test-tp19.onrender.com/api/deleteData', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      })
-    ));
+        body: JSON.stringify({ id: id }) // Explicitly naming the property
+      });
+    });
 
-    // Refresh the data
+    const responses = await Promise.all(deletePromises);
+
+    // Check if all responses were successful
+    responses.forEach((response, index) => {
+      console.log(`Response for ID ${selectedIds[index]}:`, response.status, response.statusText);
+      if (!response.ok) {
+        throw new Error(`Delete failed for ID ${selectedIds[index]}`);
+      }
+    });
+
+    console.log("All items deleted successfully. Refreshing data...");
     document.getElementById('getDataForm').dispatchEvent(new Event('submit'));
     selectedIds = [];
     deleteButton.style.display = 'none';
 
-    console.log('Successfully deleted selected items');
   } catch (error) {
-    console.error('Failed to delete items:', error);
+    console.error('Delete error:', error);
+    alert('Delete failed: ' + error.message);
   }
 });
-
