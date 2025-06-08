@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func deleteData(w http.ResponseWriter, r http.Request) {
@@ -36,20 +35,18 @@ func deleteData(w http.ResponseWriter, r http.Request) {
 		return
 	}
 
-	var idStr string
-	if oid, ok := result.DeletedID.(primitive.ObjectID); ok {
-		idStr = oid.Hex()
-	} else {
-		idStr = fmt.Sprintf("%v", result.DeletedID)
+	if result.DeletedCount == 0 {
+		http.Error(w, "No document found with the specified ID", http.StatusNotFound)
+		return
 	}
 
-	resonse := models.DeleteResponse{
+	response := models.DeleteResponse{
 		Message: req.Id + " removed from MongoDB!",
-		Id:      idStr,
+		Id:      req.Id,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resonse)
+	json.NewEncoder(w).Encode(response)
 	log.Printf("Deleting document with ID: %v", req.Id)
 }
