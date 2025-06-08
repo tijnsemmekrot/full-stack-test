@@ -96,7 +96,7 @@ deleteButton.addEventListener('click', async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       })
-    );
+    ));
 
     // Refresh the data
     document.getElementById('getDataForm').dispatchEvent(new Event('submit'));
