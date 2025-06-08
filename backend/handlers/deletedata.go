@@ -1,0 +1,55 @@
+package handlers
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"full-stack-test/db"
+	"full-stack-test/models"
+	"log"
+	"net/http"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+func deleteData(w http.ResponseWriter, r http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.IdDeleteRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := db.Collection.DeleteOne(ctx, bson.M{"_id": req.Id})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error deleting document: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var idStr string
+	if oid, ok := result.DeletedID.(primitive.ObjectID); ok {
+		idStr = oid.Hex()
+	} else {
+		idStr = fmt.Sprintf("%v", result.DeletedID)
+	}
+
+	resonse := models.DeleteResponse{
+		Message: req.Id + " removed from MongoDB!",
+		Id:      idStr,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resonse)
+	log.Printf("Deleting document with ID: %v", req.Id)
+}

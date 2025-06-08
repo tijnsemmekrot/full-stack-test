@@ -17,7 +17,7 @@ func main() {
 
 	http.HandleFunc("/api/firstName", middleware.EnableCORS(handlers.InsertFirstName))
 	http.HandleFunc("/api/getData", middleware.EnableCORS(handlers.GetDataHandler))
-
+	http.HandleFunc("/api/deleteData", middleware.EnableCORS(handlers.deleteData))
 	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

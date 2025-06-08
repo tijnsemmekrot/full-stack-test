@@ -17,3 +17,12 @@ type Response struct {
 	Message string `json:"message"`
 	ID      string `json:"id"`
 }
+
+type IdDeleteRequest struct {
+	Id string `json:"id"`
+}
+
+type DeleteResponse struct {
+	Message string `json:"message"`
+	Id      string `json:"id"`
+}
