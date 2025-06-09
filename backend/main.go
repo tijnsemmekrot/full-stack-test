@@ -13,6 +13,7 @@ func main() {
 	goVersion := os.Getenv("GO_VERSION")
 	log.Println("GO_VERSION:", goVersion)
 
+	// test
 	db.InitDB()
 
 	http.HandleFunc("/api/firstName", middleware.EnableCORS(handlers.InsertFirstName))
