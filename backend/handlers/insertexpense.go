@@ -26,4 +26,7 @@ func ExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	log.Println("results: ", result)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Response{Message: "Expense inserted successfully", ID: "123"})
 }
