@@ -29,7 +29,7 @@ document.getElementById('expenseForm').addEventListener('submit', async (e) => {
         'Content-Type': 'application/json'  // Required for JSON
       },
       body: JSON.stringify({
-        first_name: e.target.first_name.value  // Direct access via form element
+        first_name: e.target.expense.value  // Direct access via form element
       })
     });
 
